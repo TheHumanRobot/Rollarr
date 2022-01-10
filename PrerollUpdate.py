@@ -1,22 +1,9 @@
 import json
-import PySimpleGUI as sg
-import yaml
-from urllib.parse import quote_plus, urlencode
 import datetime
-import re
 import requests
-from dateutil.easter import *
+from dateutil.easter import easter
 from plexapi.server import PlexServer
-from plexapi import media, utils, settings, library
-from plexapi.base import Playable, PlexPartialObject
-from plexapi.exceptions import BadRequest, NotFound
-from argparse import ArgumentParser
 import os
-import random
-import shutil
-import pathlib
-from configparser import *
-
 
 
 def update():
@@ -86,7 +73,7 @@ def update():
         # Valentines Day
         if Date.strftime("%b%d") == 'Feb14' and data['Valentines Day Enabled']:
             Path = data['Valentines Day']
-        #April Fools
+        # April Fools
         elif Date.strftime("%b%d") == 'Apr01' and data['April Fools Enabled']:
             Path = data['April Fools']
         # Juy 4th
@@ -102,7 +89,7 @@ def update():
         elif Date.strftime("%b") == "Oct" and int(Date.strftime("%d")) >= 23 and data['Halloween Enabled']:
             Path = data['Halloween']
         # Thanksgiving
-        elif (datetime.date(Date.year,11,ThanksgivingDay) - datetime.timedelta(days=3) <= Date <= datetime.date(Date.year,11,ThanksgivingDay) + datetime.timedelta(days=4)) and data['Thanksgiving Enabled']:
+        elif (datetime.date(Date.year, 11, ThanksgivingDay) - datetime.timedelta(days=3) <= Date <= datetime.date(Date.year, 11, ThanksgivingDay) + datetime.timedelta(days=4)) and data['Thanksgiving Enabled']:
             Path = data['Thanksgiving']
         # Christmas
         elif Date.strftime("%b") == "Dec" and int(Date.strftime("%d")) >= 20 and data['Christmas Enabled']:
@@ -212,5 +199,7 @@ def update():
             print('Pre-roll updated')
 # Closing file
     f.close()
+
+
 if __name__ == '__main__':
     update()

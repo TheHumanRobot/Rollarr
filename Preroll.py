@@ -2,30 +2,14 @@ import remi.gui as gui
 from remi import start, App
 import webbrowser
 from plexapi.server import PlexServer
-import re
 import requests
-import yaml
-from urllib.parse import quote_plus, urlencode
 import PrerollUpdate
-
-
-from plexapi import media, utils, settings, library
-from plexapi.base import Playable, PlexPartialObject
-from plexapi.exceptions import BadRequest, NotFound
-
-from argparse import ArgumentParser
 import os
 from os.path import exists
-import random
-import pathlib
-from configparser import *
-import pathlib
-import datetime
 import json
-
 import time
-starttime = time.time()
 
+starttime = time.time()
 
 
 button_base64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAoCAYAAAA16j4lAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABUxSURBVHhe7VsJlFTllf7eUntVV+8LNDTQNCDaAorIoriB0YloiMRoEpfomWhOFhXISTIkMY5OzsxRExOPBMUkGo0Yo0jQUQYFFBQ77DQ0S0PT0PteXfv63pt7/1e9g3HBSc6Z+opX7/3bvf9/7/3vvf+rBhlkkEEGGWSQwT8EUvr+maDfs7Iw2tk5R4vHz4OhT0Q8CSnPO9+Ix+sQijUbLkdY0lKH4PUc2D0x8eEVDz6YSg/N4HPGp1Zw87eecnoiPUsRCF4vxZIXxVUZvjw3er1uBNxOJG0qZE2HPZ6A1x9GXncQnmAUUNWopMivSQXeZzy//+GWNLkMPid8YgX3fntljtLTfS+Coe9EVDn/8JQxqDm3DI1j8hG122AQRVn0NOiSoNOdy4puwNsbxqSjzTi35hTGNnVCcTq3Gw7bTzwvrsgo+nPCJ1Kwb/GKK5WEtjaiKt5dMyeiavZksVtNZTIxCXl2C+KaQZeGApsNLdEYcu1WKNTWEYubDA0DZac6cdnWA5h4og2yzbLWKM69O+vp5V2CUAZnDR9LwcYDL7uDe/c9gFhi+cGpY7B+0cWIuuxmGylLkkwyTlVBuduFal8AcwvzsKPTR7vXwEWFOdje3iP6DOYo0a4ur2vF4nVVyI4lew2repPntYfeTjdncBbwdxVsfOspS7i7+c14NL7grWtmYtfMcnLDNCytVFYwg5XsVlUsGlOMTa2dKCJ3Xep2oIoUO7+kAM3hCHZ19ZK6BwzC3PgGXOEYFr9WhcnHWpJKYfZNrhdWrBPtGXxmmOHyDCBlSGF/2yvRWHzBn2+6FDtnVgjlmiodiVAyhb+eaiMll+CAz4+mcBTjaEevP9WCydlZpNihI1nZTC/ocmDNLfNRfV6ZRe/qfSF6+y+uSXfJ4DPiI3dwePEDjyZikWVrF8/F/srxos4cwEpOK4tvaSqsP5si43LasRua2zEzPxvHA0H4EylcRzv79Yb2dEfzxhA6pzLfLEkNt7z0LibVtXanbNalBnRKu88GNCgafSvp4jBQE+UIfY1m6Z8OBblIheJ7CmZNapGXffVjy+WMCg7f/disVH3r37ZcXoktl08T2XGfToegv55cL30sigS7LCOY0pBns6IrHodFlpCjWtGRSJyBhlnJpOyxJL696i3k9AahWc+uoE+32JHTOdNC/7EwZ0XfFjVuWJVXLLk5qzwr7/2AZP6Rkz3dmjmuSqEbflLV4bLN+u091yJhVfs79lGThHfXIVOFJGmwIQSX3k1XL6x6kI5FcW6GLlto5zgQlT2IyPkIS14kYSU6nH4NhVgEWdI5Rxvx9TXvQVfpmEUeIYOhEHLiPMZlfznqcX9n9EecPk6r4NhXH7420eN784+3XYXaiaOoxtyd/C+dU4l4mmc043o8gnhtB4I1LYi3pKBFk9CTOjQ6KhmkYFk1L8Uiw5pnhbUsF1nTRuFQziLswnX9SRpDJF9sMFR380tbMfVIA1I2GkzgXjxZvoYbxqdCH8FPiD7eQh6DZ0KP7OU+BclPh775y3KdpaLoy55H76sW9cNw2vkEb/zZ9ma3fc6qu6+FLtZBy+nbSLwQunF1pbQFd6pLqSwhmbDATyehuF9HLCgjTlFCSynE34DFocKZKyGriO6UbKkIoC5Zjif11SbJQZk4P7KCyxo6cdfv/ge6heoUctVcTx+d6J3OKQkaNF52OqBHoqIvD+JvsjOBvsVy+dP6BUGDkkIjTuGGwtBgyF43tGCEjn99HP8PQBMyZKVDn1B2WcEv7z6Sru1H35r7oS9bWRg6VN+w8crptq2XTqXR3MXcwR50o0LaIUad1KdhtHQYdynLqYspyJFyp1qlEEbuV8R4SaLdKCkwwlVoDnTjEW1Nuh+NF8odoKCSB1j6q1fhCSVoF8tw3XcTlMoJ0Bs7oJ9qR3LfcaQO1ZMwKW7feS0iW3bCUloE5eoLkao5AXvlZDQv/y8UXDIXtkVz0fvcesiHWmCdVgHbzVchdKQWkd+/AXd2AaxXzIB2sh1StgsyJYYMQ9OgHW8iHqfE2oTlZTnhuPM6WC+tROOqZ2HZWAOH7BD91QsmwbXiNhj+EOJb9iD+xnbAH4Zl5hRYL59B3kyHf9Vf4JhcDrWsxFwrnTqMaAKS18UMqKzBCJFxZlGZ8hbmaQRop1CYktzmewcekzh4AkY9Jay8eHN2kFyuQ9mTtUrpwQeHWJfp/wYh5AvONSikHiPXzDulL1t2oRf3qPdgFOqoRkaMFtZplBFl0UnwYVZ9OhLelp4lPcCqpQmnJ8hQvDR/Eij5cBFLTgONkrXailLM3HNCsNApQVPsVlimT4Jx/kRYr58HvbsXrb96BllfmIVT/iNwF+chp8gL3Toe6vhSNJbFUfIvsyFPGoNq305M1LwYfff1kEsLoRl+NCcbUDl/IWx3LSLBJcQyZKs1vQ4DnXt349SPNqLCMVksyPGVK2G78gIxP6lyLDr/ezPG2saJslI+mqSpQPfYoVxzEVxXzUDwvZ1w3nAVKZcMmLxQW/U7mHD1JbBXVIgxw5EW40eC+7T/dS2Cq3ZgjJXkL2roOxyeGmjJv5UenxMVaYzwVFIieXHcpqAn1y0W1Sf/WfI6lEjH0Yhz8IS2GlX6l6lcJ9oG64ifxW7kqdI/w6BkK2W+4OiHbINqJEnJpmcwvYQ5bqAsobUkl5518cYr9uQ6pKpqiIqOA6t+Bf+e/ZDzshGdQYIla5cohuj0sTidaNtJu4eWVnLFVVArRiN48gTidQ3IUj0wfEHBJ3t8BYJGBJb559MGIX4kCT0eg66lcGztGrS8sxHNm94S62HwTT5vghjLhZyKcxBIBcwWDmGUK/Cqw61NCJw4TjbsgXXmJF4UDj+/mvKSOLImTkbMIEMi4zm65lk0vvQSQqcahGxObViPU3/6E0J1J4gmG9dOnFz3Klre3UKhLokkxbyjL/4BLZtoXh++C8XgE8YgmRL0rt4l6cd+jAxFoZgao52StKSPKESDRTdB2kcFCR/oN+KEMQPr9fuwSb/D7DMEvEwgEZfw/lsy9mwlT9XRTDVDJ5M2AQJ5FH5IN4ub2YCgx3zPLeroy4iQsRC8E6fAde5kJCjoa6QUNgotmRRtssWGzn17oKcSKPvCItqRNtRveB3FSrFoFzGS7qrLBeeFUyGVcxJJ9XSci/t7yZg01L/6MhxPbELZtiDK7aQkgkFHP2VMgeCjJ5JwFBQiZiEXyxMT8zUnHaivQ0/1HrRte5fm5xdz69pPLrunB+6xZSI/YLTv2A7HK/uhHmwS5e6D1bD9dT+U7cfIACR0Vu9F5Kn1cD71HiQ6OhrE9+Rzz8P56y2YcsiOEhsZ9jCQP1yYfuzHCAXLFHuSlnTmyjFATJFckESxgspRI1uUWehhw8vdhoDd8tG9wPpnaZfkGDi0G3j1tx2oq5Gh0U4UAuFOQh5p+vQsWriea0xZCTdt/hZF4D5dpsDKrr4WqWAQO5YthaedFs8finFGKkWbmY5fZO2x/UegkBKTwQBa396IEispktlSXBTkiMmkW+8ULpkRaW1FqKWRNG/B7IcfhXvFHUjkOQQ/hlyaD4mOi76jNfDX0w4lQ5KLcqBTPBMQiZWERCiI8JqNSD32GpyyU6wp1tEBKZKANSub2ilkEe95j61EzrM/RchOcqXP9Pt/jMLnH0KvgwyWPNuE65dgzEM/gH5ROXSKy6rDhdm/WQnn8psQtxEnFtUwyCnN1vrIHzmg92OEgnWKFdaE+Xu86TKpzpDRY4xm0cMiRVlOZj2FcNYJWxwrIpGQcXCHjJNHJRyvMbDxFQkXXU6LjnSg4ZiB4weZKvXXoxQDzXMw0zEVOxwGVMpS+QdHU8RU0xukWgNtVR+IHTjnl0/CyPNwV24Vfdg6LC43Qlt20BldQsv2rXCFFNglSoZI+cmmTsGPd2Lu1GnCKNg4wu0tSIRDYs223DyEsw3s7NiKlEGyoDpl0lhiIdEu9yEZCol5cAhIKcK8oJPrF6AkSKK1ZReNhRwlo2PFcwwm3gp5k0hnh+DfuOFNHF79JPxtDTSI17QNtb97Gi37qwQZ1eGAPDobR3r2IBSkYy7Pq7AQ3WoQB3t301RGyoz1Y3V6KK4NYISCDZfN56DMzhYf+KMLToTq9RlCG6XSkf5BGmXE1ESXAfKU+PNK4L03gELyHlyXSOg4ss/AlMogCTQGXkssQkajhWmslVTHYYDKTGQEyAP0huhucmMb0CPEhND4zgaEd+4HHBZ0h1tpYcRz9qXIO58SICq4x41HrLNTzJcV4lUHeRr+wYME3nOErI3mGKD4rFOc57iZaG0XrvDd796FjvsfwXRpKpkwrZE8iWXBhUSalDrnMuTPmEmEJIz/0o2oiR0QZLW6ZjEPmRTjuPJCWB74BlpP0NGUcwhFhUqeQaZYb1Ao4N1eS/G0aEs7SoJeMe7EG2uR9WYtJvUWU1nCsZdfwIE7voeiPSE4uugkEQlh09eWIPzwczjPXslSE3yHQFWSed9ZTG5oACMUrGS5DljICvM7/UJYYnPRddSYg5CRg2nSRjou8YsTsmbKrbmdr73vS2gj0tPnGtixWUJxKaX29Kml9TscceTm99BaJUTC1FnrorF2GmfGa3MH84TNSxQJpc10sCbls4FxEmOdd75wTdOX/giui6ej5unfIPTuLoB2T+6kKbB5s8W5PWvcRDoNkLL4w9k3H82EPGintRJNEnoDJVBaOIKmzRsF10DTSVh6SPiygnO/eQ/Kvnc3sqZXcoZAu1yD3tCOFO3wLXd9HQ0PPy4MoXPfbliSbKCks/o2GMEw8S7H2NtvRVKPoav+ECnXgkseeQJKST7pVUfM1yNogkKhTB/DR96ARRKNQGWjD5BRU4wvnn0Jptx7H0puWYJUpw+q1Y7zv7cMZd/9V9jLyJumZTQMm9P3foxQsNOas02yqInJx1pYHubuon8h5FBS9U14Sbm3Kj+kpGsvctEqFMAdCkqAi6+UsL/K7H/ZIgOzF5Bro3D+3nq23E5MucCAx0vLS7ZR/CZPwkMHQVBKT5x/eODfig3xLpQqVBUyZcTh9la07arC+7RQ7fWdmBobi+iTryHZ0YUPf7oUifomuEvHwN/dImIXu10Lffqgt3XTmbeNstoEmr//C6j7GklxEfQcqIa9mupbulByyXyodMypju6HL9VNo8i9OulYWEOZe0MXvLs7oR2oR4qU4lA4zpKoaFNEH38F3uxi2PMLhJfRPzgszur24hKKDgpCTY3w76YEMEAejbwRbwDe+bovgGhzKxkiKTwQQeL9amSNGQ/P1XPRUZDA4c2v0vk6gpIFCyHNPxe7AzsQ0TmXGCpAOdu9Nv3Yj2EiNuFf8rN1PkW+4dffvx46HyF4F1G9SvFoofI05ksvwSZxNsqRl5MMfpLQ3iwhHDBQOgGwUSLACAUp5W+R6GRUjDFTx1Ev6h/ZhW36EqzVfyz68A4e4qaJ2eQjTfjGi5uhUWJj8BxEtUEC94lJuxQ3rGTxDDYKzSLDF21HnqsY8RI32mv3YVz5xWj01yKrV4Zb5p8rRXdITjs6U+1wxCxwU8hKFrjQcHgHxjto4qSIsFNDxAgj2eMT2SrvNLmsCK1KN4wjDSi2joY0Oh+tPcfgoPV51RxBl2Uk26zQpo5C7c4NGKeMh0Ol2F9egh53FG17qlCSykd2bilauo5jFCV+vCY5y42W7uMothSJ+M3zjDtkhNQwInRSyKXE1mHzUEKWREQLQqfQVWIrFfx4SXzpDlt9rnFehfSXm4a8XksveSgiX/uPecnO7m3rFs+Tds8oT9emOxNVhxRAkXQSFfJ2XCuvpklRnCEps5KHEuQp8DfXm89MhZ9e1+4lj3C7KA+Ae5KQNAN3/uEdjG3sgGZjJzPQh5VputvTgSlzf5Mj/z2YOaM+3oPBdSYhEQJO4/MGepgwV8GfPi5m++CRfW1mTj105QPUhteYshuO4aNNDHDsf1IUv1Sce0XOquV0fhmKES6a4XxxxQdkMusXvL1H/LWFScUkysKNUBSuN6Zhu3YzWTplsf0M+T74MjF0ksJm0azRbulDutlUhoQL9h1HGcU8Qx2qXMaZlcvoX7LgYnYdzHswBgidTrmM4axM1Q7mMpJ6X5s5drh6uHS6muGcTIxULmOgToyzqiFpbOGNp1Mu47QKZlgLc+/3xFLa1W/vNX8SFHSJZJp+IuRH66ludMdYweYE++Q09D588nRs0lQcrE2hq7YWoXZKTrSk6MVvqfgvLxe+s1+4ZZ2y1wzOAPbjLtuHtvzcKTm/uW9TunYEzqhgxzM/qJcN5VsX7K3DvO2HzfjFX/RPi3GGeALB3gD+5uMjA59pzbY+A0vfTPRvO/PsWxcdC1/Cg0QsiiAp2NfYKAzHFUng62u2wEle42z/2D8AYiQsr2+Gg5//+cHvtOG0f4Cywtty1vx8nuupZfya8Izok/wZEbj53x9BT2D5+i/OxM5Zk6mGHAfF3EhPD8I9XZDiQVycvQtzcnZglL0DFsl8ZTiYNLu2hK7Cl8xGXXgC3uy4Gr0pD+UzFtg9HriLiuAhI7j9hS0obehq1HM9K2UtFUid0fw+AXTKOZIUET3uCbCoeSI6sj77p2cykVNaux4KN6DvFe0/CziY8xQpiZQ9nrpURf7B/GV3fKRSB+PvKpgRvOWh32o9gXt2zJqCtxecL/7Cg4dyEsNvgpLRKHTa1VoqAp3KfMYTrw7TguS3OOIVomqDRMcdlVJsi91Jd8qCZRklrT585dXtKOz2dytjRn3Rtfr+vwnGGXxmfCwF0zFGCi158GY9GnmurcBrWXvDHLSW5NDg9HC6sTKFG+/TKoMrzEAsIJrTF8NKxjBz5zEs3LQfVpu1Vs9yXed99ofH0s0ZnAWkNfHxEP3SQ+UpPfqGFk9NOTqpBFvnV6J5VC6FWDO2jgBRFwzSXITq6cuaSGJa9Ulcsq0GOf5QSnLYH/dMU34sZf5T2lnHJ1Iww3jgATVYZ7kBvtByI5ma3VSah5qpZagfV4TO/Cwk0+5bKFOMMEtuSpxGNfVg8rEGnHO4Ga5YUpPtltVIOX7ueX1F+u9pMzjb+MQKHozgHf+5EP7w1yRNW2zEk94YJShBjwNBtwMpTlYoDtvjKXgDUcqQo1B5p1vVvYrLucEocDzhfnxpa5pUBp8TPpOC+8AxOvFvz1TGmjqnwR8qVrJdFxqRuMwpvaFr9Yohdxm5riMOT9Fm+bHbzB9kM8gggwwyyOD/M4D/BWTyNO5ugu1GAAAAAElFTkSuQmCC"
@@ -43,9 +27,6 @@ class Rollarr(App):
     def __init__(self, *args):
         super(Rollarr, self).__init__(*args)
 
-
-
-
     def main(self):
         with open('data.json') as json_file:
             output = json.load(json_file)
@@ -57,7 +38,7 @@ class Rollarr(App):
         self.container5 = gui.VBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
         self.container6 = gui.VBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
         self.container6H = gui.HBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
-        self.submission =  gui.HBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
+        self.submission = gui.HBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
 
         self.app.append(self.container)
         if output.get('Freq') == 'Monthly':
@@ -97,7 +78,7 @@ class Rollarr(App):
         self.title = gui.Label('Rollarr - Automate your Plex Preroll!', size=(20, 1))
         self.title.css_font_size = "20px"
         self.container.append(self.title)
-        self.container.append(gui.Label(" ",height=40))
+        self.container.append(gui.Label(" ", height=40))
         self.container.append(gui.Label('Plex Server URL'))
         self.url = gui.Input(default_value=output.get('URL'), key='URL')
         self.container.append(self.url)
@@ -105,7 +86,7 @@ class Rollarr(App):
         self.Token = gui.Input(default_value=output.get('Token'), key='Token')
         self.container.append(self.Token)
         self.container.append(gui.Label('Schedule'))
-        self.dropDown = gui.DropDown(('Select','Monthly', 'Weekly', 'Daily', 'Holiday', 'Custom'),width=200, key='Freq', enable_events=True)
+        self.dropDown = gui.DropDown(('Select', 'Monthly', 'Weekly', 'Daily', 'Holiday', 'Custom'), width=200, key='Freq', enable_events=True)
         self.container.append(self.dropDown)
         self.dropDown.onchange.do(self.drop_down_changed)
         self.dropDown.select_by_value(output.get('Freq'))
@@ -135,8 +116,6 @@ class Rollarr(App):
         self.buylink = gui.Link("https://www.buymeacoffee.com/thehumanrobot", "Click here to buy me a coffee", width=150, height=59)
         self.buylink.css_background_image = button_base64
         self.container.append(self.buylink)
-
-
 
         self.container2.append(gui.Label('Select your files', size=(20, 1), font=("Helvetica", 15)))
         self.container2.append(gui.Label("Jan : ", size=(5, 1)))
@@ -196,7 +175,7 @@ class Rollarr(App):
         self.container2H7.append(self.defaultJul)
         self.container2.append(self.container2H7)
         self.container2.append(gui.Label("Aug : ", size=(5, 1)))
-        self.defaultAug= gui.Input(default_value=output.get('Aug'))
+        self.defaultAug = gui.Input(default_value=output.get('Aug'))
         self.btFileDiag9 = gui.Button('Select', width=100, height=20)
         self.btFileDiag9.onclick.do(self.open_fileselection_dialogAug)
         self.container2H8 = gui.HBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
@@ -249,7 +228,6 @@ class Rollarr(App):
         self.btFileDiag14.onclick.do(self.open_fileselection_dialogPath)
         self.container3.append(self.btFileDiag14)
         self.container3.append(self.WeekPath)
-
 
         self.container4.append(gui.Label('Select your files', size=(20, 1), font=("Helvetica", 15)))
         self.container4.append(gui.Label('Monday', size=(7, 1)))
@@ -476,7 +454,7 @@ class Rollarr(App):
         self.container6.append(gui.Label('July 4th: ', size=(11, 1)))
         self.Path4th = gui.Input(default_value=output.get('July 4th'))
         self.checkbox4th = gui.CheckBox(checked=output.get('July 4th Enabled'))
-        self.btFileDiag34= gui.Button('Select', width=100, height=20)
+        self.btFileDiag34 = gui.Button('Select', width=100, height=20)
         self.btFileDiag34.onclick.do(self.open_fileselection_dialogPath4th)
         self.container6H3 = gui.HBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
         self.container6H3.append(self.btFileDiag34)
@@ -486,7 +464,7 @@ class Rollarr(App):
         self.container6.append(gui.Label('Mardi Gras: ', size=(11, 1)))
         self.Pathmardigras = gui.Input(default_value=output.get('Mardi Gras'))
         self.checkboxmardigras = gui.CheckBox(checked=output.get('Mardi Gras Enabled'))
-        self.btFileDiag35= gui.Button('Select', width=100, height=20)
+        self.btFileDiag35 = gui.Button('Select', width=100, height=20)
         self.btFileDiag35.onclick.do(self.open_fileselection_dialogPathmardigras)
         self.container6H4 = gui.HBox(margin='0px auto', style={'display': 'block', 'overflow': 'hidden'})
         self.container6H4.append(self.btFileDiag35)
@@ -534,14 +512,11 @@ class Rollarr(App):
         self.container6H8.append(self.checkboxChristmas)
         self.container6.append(self.container6H8)
 
-
-
         # returning the root widget
         return self.app
-    
-    def open_link(self, widget):
-        webbrowser.open('https://www.buymeacoffee.com/thehumanrobot',0,True)
 
+    def open_link(self, widget):
+        webbrowser.open('https://www.buymeacoffee.com/thehumanrobot', 0, True)
 
     def open_fileselection_dialog(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders', True,
@@ -565,58 +540,60 @@ class Rollarr(App):
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
 
-
     def on_fileselection_dialog_confirmJan(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultJan.set_value(';'.join(filelist))
 
     def open_fileselection_dialogFeb(self, widget):
-        self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',True,'.',True,False)
+        self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders', True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmFeb)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
 
     def on_fileselection_dialog_confirmFeb(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultFeb.set_value(';'.join(filelist))
 
     def open_fileselection_dialogMar(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmMar)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmMar(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultMar.set_value(';'.join(filelist))
 
     def open_fileselection_dialogApr(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmApr)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmApr(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultApr.set_value(';'.join(filelist))
 
     def open_fileselection_dialogMay(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmMay)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmMay(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultMay.set_value(';'.join(filelist))
 
     def open_fileselection_dialogJun(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmJun)
         # here is returned the Input Dialog widget, and it will be shown
@@ -625,64 +602,70 @@ class Rollarr(App):
     def on_fileselection_dialog_confirmJun(self, widget, filelist):
         # a list() of filenames and folders is returned
         self.defaultJun.set_value(';'.join(filelist))
+
     def open_fileselection_dialogJul(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmJul)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmJul(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultJul.set_value(';'.join(filelist))
 
     def open_fileselection_dialogAug(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmAug)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmAug(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultAug.set_value(';'.join(filelist))
 
     def open_fileselection_dialogSep(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmSep)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmSep(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultSep.set_value(';'.join(filelist))
 
     def open_fileselection_dialogOct(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmOct)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmOct(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultOct.set_value(';'.join(filelist))
 
     def open_fileselection_dialogNov(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmNov)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
+
     def on_fileselection_dialog_confirmNov(self, widget, filelist):
-         # a list() of filenames and folders is returned
+        # a list() of filenames and folders is returned
         self.defaultNov.set_value(';'.join(filelist))
 
     def open_fileselection_dialogDec(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmDec)
         # here is returned the Input Dialog widget, and it will be shown
@@ -694,7 +677,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath)
         # here is returned the Input Dialog widget, and it will be shown
@@ -704,9 +687,10 @@ class Rollarr(App):
         # a list() of filenames and folders is returned
         self.WeekPath.set_value(';'.join(filelist))
 
+    """
     def open_fileselection_dialogPath(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath)
         # here is returned the Input Dialog widget, and it will be shown
@@ -715,10 +699,11 @@ class Rollarr(App):
     def on_fileselection_dialog_confirmPath(self, widget, filelist):
         # a list() of filenames and folders is returned
         self.WeekPath.set_value(';'.join(filelist))
+    """
 
     def open_fileselection_dialogPath1(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath1)
         # here is returned the Input Dialog widget, and it will be shown
@@ -730,7 +715,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath2(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath2)
         # here is returned the Input Dialog widget, and it will be shown
@@ -742,7 +727,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath3(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath3)
         # here is returned the Input Dialog widget, and it will be shown
@@ -754,7 +739,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath4(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath4)
         # here is returned the Input Dialog widget, and it will be shown
@@ -766,7 +751,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath5(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath5)
         # here is returned the Input Dialog widget, and it will be shown
@@ -778,7 +763,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath6(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath6)
         # here is returned the Input Dialog widget, and it will be shown
@@ -790,7 +775,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath7(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath7)
         # here is returned the Input Dialog widget, and it will be shown
@@ -802,7 +787,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath8(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath8)
         # here is returned the Input Dialog widget, and it will be shown
@@ -814,7 +799,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath9(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath9)
         # here is returned the Input Dialog widget, and it will be shown
@@ -826,7 +811,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath10(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath10)
         # here is returned the Input Dialog widget, and it will be shown
@@ -836,12 +821,10 @@ class Rollarr(App):
         # a list() of filenames and folders is returned
         self.WeekPath.set_value(';'.join(filelist))
 
-
     def open_fileselection_dialogMon(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
-        self.fileselectionDialog.confirm_value.do(
-        self.on_fileselection_dialog_confirmMon)
+                                                           True, '.', True, False)
+        self.fileselectionDialog.confirm_value.do(self.on_fileselection_dialog_confirmMon)
         # here is returned the Input Dialog widget, and it will be shown
         self.fileselectionDialog.show(self)
 
@@ -851,7 +834,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogTue(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmTue)
         # here is returned the Input Dialog widget, and it will be shown
@@ -863,7 +846,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogWed(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmWed)
         # here is returned the Input Dialog widget, and it will be shown
@@ -875,7 +858,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogThu(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmThu)
         # here is returned the Input Dialog widget, and it will be shown
@@ -887,7 +870,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogFri(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmFri)
         # here is returned the Input Dialog widget, and it will be shown
@@ -899,7 +882,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogSat(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmSat)
         # here is returned the Input Dialog widget, and it will be shown
@@ -911,7 +894,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogSun(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmSun)
         # here is returned the Input Dialog widget, and it will be shown
@@ -923,7 +906,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPathvday(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmvday)
         # here is returned the Input Dialog widget, and it will be shown
@@ -935,7 +918,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPathaprilday(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmaprilday)
         # here is returned the Input Dialog widget, and it will be shown
@@ -947,7 +930,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPath4th(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPath4th)
         # here is returned the Input Dialog widget, and it will be shown
@@ -959,7 +942,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPathmardigras(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPathmardigras)
         # here is returned the Input Dialog widget, and it will be shown
@@ -971,7 +954,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPatheaster(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPatheaster)
         # here is returned the Input Dialog widget, and it will be shown
@@ -983,7 +966,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPathhalloween(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPathhalloween)
         # here is returned the Input Dialog widget, and it will be shown
@@ -995,7 +978,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPathThanksgiving(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPathThanksgiving)
         # here is returned the Input Dialog widget, and it will be shown
@@ -1007,7 +990,7 @@ class Rollarr(App):
 
     def open_fileselection_dialogPathChristmas(self, widget):
         self.fileselectionDialog = gui.FileSelectionDialog('File Selection Dialog', 'Select files and folders',
-                                                               True, '.', True, False)
+                                                           True, '.', True, False)
         self.fileselectionDialog.confirm_value.do(
             self.on_fileselection_dialog_confirmPathChristmas)
         # here is returned the Input Dialog widget, and it will be shown
@@ -1017,8 +1000,7 @@ class Rollarr(App):
         # a list() of filenames and folders is returned
         self.PathChristmas.set_value(';'.join(filelist))
 
-
-        #change pre-roll types
+    # change pre-roll types
     def drop_down_changed(self, widget, value):
         print(value)
         if value == 'Monthly':
@@ -1052,10 +1034,7 @@ class Rollarr(App):
             self.app.remove_child(self.container4)
             self.app.remove_child(self.container6)
 
-
-
-
-    def savefile(self,widget):
+    def savefile(self, widget):
         with open('data.json', 'w') as outfile:
             json.dump({'URL': self.url.get_value(), 'Token': self.Token.get_value(), 'Freq': self.dropDown.get_value(), 'Jan': self.defaultJan.get_value(),
                        'Feb': self.defaultFeb.get_value(), 'Mar': self.defaultMar.get_value(), 'Apr': self.defaultApr.get_value(), 'May': self.defaultMay.get_value(),
@@ -1067,29 +1046,28 @@ class Rollarr(App):
                        'Valentines Day': self.Pathvday.get_value(), 'April Fools': self.Pathaprilday.get_value(),
                        'July 4th': self.Path4th.get_value(), 'Mardi Gras': self.Pathmardigras.get_value(), 'Easter': self.Patheaster.get_value(),
                        'Halloween': self.Pathhalloween.get_value(), 'Thanksgiving': self.PathThanksgiving.get_value(),
-                       'Christmas': self.PathChristmas.get_value(), 'Valentines Day Enabled': self.checkboxvday.get_value()
-                          , 'April Fools Enabled': self.checkboxaprilday.get_value(),
+                       'Christmas': self.PathChristmas.get_value(), 'Valentines Day Enabled': self.checkboxvday.get_value(),
+                       'April Fools Enabled': self.checkboxaprilday.get_value(),
                        'July 4th Enabled': self.checkbox4th.get_value(),
                        'Mardi Gras Enabled': self.checkboxmardigras.get_value(), 'Easter Enabled': self.checkboxeaster.get_value(),
                        'Halloween Enabled': self.checkboxhalloween.get_value(),
                        'Thanksgiving Enabled': self.checkboxThanksgiving.get_value(),
-                       'Christmas Enabled': self.checkboxChristmas.get_value(), 'Default': self.default.get_value()
-                          , 'Start1': self.Start.get_value(), 'Start2': self.Start2.get_value(), 'Start3': self.Start3.get_value(),
+                       'Christmas Enabled': self.checkboxChristmas.get_value(), 'Default': self.default.get_value(),
+                       'Start1': self.Start.get_value(), 'Start2': self.Start2.get_value(), 'Start3': self.Start3.get_value(),
                        'Start4': self.Start4.get_value(), 'Start5': self.Start5.get_value(), 'Start6': self.Start6.get_value(),
                        'Start7': self.Start7.get_value(), 'Start8': self.Start8.get_value(), 'Start9': self.Start9.get_value(),
-                       'Start10': self.Start10.get_value()
-                          , 'End1': self.End1.get_value(), 'End2': self.End2.get_value(), 'End3': self.End3.get_value(),
+                       'Start10': self.Start10.get_value(),
+                       'End1': self.End1.get_value(), 'End2': self.End2.get_value(), 'End3': self.End3.get_value(),
                        'End4': self.End4.get_value(), 'End5': self.End5.get_value(), 'End6': self.End6.get_value(), 'End7': self.End7.get_value(),
-                       'End8': self.End8.get_value(), 'End9': self.End9.get_value(), 'End10': self.End10.get_value()
-                          , 'Path1': self.Path1.get_value(), 'Path2': self.Path2.get_value(), 'Path3': self.Path3.get_value(),
+                       'End8': self.End8.get_value(), 'End9': self.End9.get_value(), 'End10': self.End10.get_value(),
+                       'Path1': self.Path1.get_value(), 'Path2': self.Path2.get_value(), 'Path3': self.Path3.get_value(),
                        'Path4': self.Path4.get_value(), 'Path5': self.Path5.get_value(), 'Path6': self.Path6.get_value(),
                        'Path7': self.Path7.get_value(), 'Path8': self.Path8.get_value(), 'Path9': self.Path9.get_value(),
                        'Path10': self.Path10.get_value()}, outfile)
         self.popup = gui.GenericDialog("Your changes are saved")
         self.popup.show(self)
 
-
-    def submitfile(self,widget):
+    def submitfile(self, widget):
         with open('data.json', 'w') as outfile:
             json.dump({'URL': self.url.get_value(), 'Token': self.Token.get_value(), 'Freq': self.dropDown.get_value(), 'Jan': self.defaultJan.get_value(),
                        'Feb': self.defaultFeb.get_value(), 'Mar': self.defaultMar.get_value(), 'Apr': self.defaultApr.get_value(), 'May': self.defaultMay.get_value(),
@@ -1101,21 +1079,21 @@ class Rollarr(App):
                        'Valentines Day': self.Pathvday.get_value(), 'April Fools': self.Pathaprilday.get_value(),
                        'July 4th': self.Path4th.get_value(), 'Mardi Gras': self.Pathmardigras.get_value(), 'Easter': self.Patheaster.get_value(),
                        'Halloween': self.Pathhalloween.get_value(), 'Thanksgiving': self.PathThanksgiving.get_value(),
-                       'Christmas': self.PathChristmas.get_value(), 'Valentines Day Enabled': self.checkboxvday.get_value()
-                          , 'April Fools Enabled': self.checkboxaprilday.get_value(),
+                       'Christmas': self.PathChristmas.get_value(), 'Valentines Day Enabled': self.checkboxvday.get_value(),
+                       'April Fools Enabled': self.checkboxaprilday.get_value(),
                        'July 4th Enabled': self.checkbox4th.get_value(),
                        'Mardi Gras Enabled': self.checkboxmardigras.get_value(), 'Easter Enabled': self.checkboxeaster.get_value(),
                        'Halloween Enabled': self.checkboxhalloween.get_value(),
                        'Thanksgiving Enabled': self.checkboxThanksgiving.get_value(),
-                       'Christmas Enabled': self.checkboxChristmas.get_value(), 'Default': self.default.get_value()
-                          , 'Start1': self.Start.get_value(), 'Start2': self.Start2.get_value(), 'Start3': self.Start3.get_value(),
+                       'Christmas Enabled': self.checkboxChristmas.get_value(), 'Default': self.default.get_value(),
+                       'Start1': self.Start.get_value(), 'Start2': self.Start2.get_value(), 'Start3': self.Start3.get_value(),
                        'Start4': self.Start4.get_value(), 'Start5': self.Start5.get_value(), 'Start6': self.Start6.get_value(),
                        'Start7': self.Start7.get_value(), 'Start8': self.Start8.get_value(), 'Start9': self.Start9.get_value(),
-                       'Start10': self.Start10.get_value()
-                          , 'End1': self.End1.get_value(), 'End2': self.End2.get_value(), 'End3': self.End3.get_value(),
+                       'Start10': self.Start10.get_value(),
+                       'End1': self.End1.get_value(), 'End2': self.End2.get_value(), 'End3': self.End3.get_value(),
                        'End4': self.End4.get_value(), 'End5': self.End5.get_value(), 'End6': self.End6.get_value(), 'End7': self.End7.get_value(),
-                       'End8': self.End8.get_value(), 'End9': self.End9.get_value(), 'End10': self.End10.get_value()
-                          , 'Path1': self.Path1.get_value(), 'Path2': self.Path2.get_value(), 'Path3': self.Path3.get_value(),
+                       'End8': self.End8.get_value(), 'End9': self.End9.get_value(), 'End10': self.End10.get_value(),
+                       'Path1': self.Path1.get_value(), 'Path2': self.Path2.get_value(), 'Path3': self.Path3.get_value(),
                        'Path4': self.Path4.get_value(), 'Path5': self.Path5.get_value(), 'Path6': self.Path6.get_value(),
                        'Path7': self.Path7.get_value(), 'Path8': self.Path8.get_value(), 'Path9': self.Path9.get_value(),
                        'Path10': self.Path10.get_value()}, outfile)
@@ -1131,16 +1109,11 @@ class Rollarr(App):
         print(plex.account())
         self.popupconnected = gui.GenericDialog("Your sever is connected")
         self.popupconnectedfail = gui.GenericDialog("Connection error please check logs")
-        if plex.account() != None:
+        if plex.account() is None:
             self.popupconnected.show(self)
         else:
             self.popupconnectedfail.show(self)
 
 
 if __name__ == "__main__":
-    start(Rollarr,address='0.0.0.0', port=3100, start_browser=True, multiple_instance=True)
-
-
-
-
-
+    start(Rollarr, address='0.0.0.0', port=3100, start_browser=True, multiple_instance=True)
